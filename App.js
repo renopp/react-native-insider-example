@@ -25,55 +25,11 @@ import {
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 
-import RNInsider from 'react-native-insider';
-import InsiderCallbackType from 'react-native-insider/src/InsiderCallbackType';
-import {INSIDER_PARTER_NAME, INSIDER_GROUP_BUNDLE_ID} from './config';
+import OneSignal from 'react-native-onesignal';
+
+import {ONESIGNAL_APP_ID} from './config';
 
 const App: () => React$Node = () => {
-  React.useEffect(() => {
-    RNInsider.init(
-      INSIDER_PARTER_NAME,
-      INSIDER_GROUP_BUNDLE_ID,
-      (type, data) => {
-        switch (type) {
-          case InsiderCallbackType.NOTIFICATION_OPEN:
-            console.log('[INSIDER][NOTIFICATION_OPEN]: ', data);
-            Alert.alert('[INSIDER][NOTIFICATION_OPEN]:', JSON.stringify(data));
-            break;
-          case InsiderCallbackType.INAPP_BUTTON_CLICK:
-            console.log('[INSIDER][INAPP_BUTTON_CLICK]: ', data);
-            Alert.alert(
-              '[INSIDER][INAPP_BUTTON_CLICK]: ',
-              JSON.stringify(data),
-            );
-            break;
-          case InsiderCallbackType.TEMP_STORE_PURCHASE:
-            console.log('[INSIDER][TEMP_STORE_PURCHASE]: ', data);
-            Alert.alert(
-              '[INSIDER][TEMP_STORE_PURCHASE]: ',
-              JSON.stringify(data),
-            );
-            break;
-          case InsiderCallbackType.TEMP_STORE_ADDED_TO_CART:
-            console.log('[INSIDER][TEMP_STORE_ADDED_TO_CART]: ', data);
-            Alert.alert(
-              '[INSIDER][TEMP_STORE_ADDED_TO_CART]: ',
-              JSON.stringify(data),
-            );
-            break;
-          case InsiderCallbackType.TEMP_STORE_CUSTOM_ACTION:
-            console.log('[INSIDER][TEMP_STORE_CUSTOM_ACTION]: ', data);
-            Alert.alert(
-              '[INSIDER][TEMP_STORE_CUSTOM_ACTION]: ',
-              JSON.stringify(data),
-            );
-            break;
-        }
-      },
-    );
-    RNInsider.registerWithQuietPermission(false);
-  }, []);
-
   return (
     <>
       <StatusBar barStyle="dark-content" />
@@ -121,6 +77,83 @@ const App: () => React$Node = () => {
   );
 };
 
+class AppTest extends React.Component {
+  constructor() {
+    super();
+    this.state = {isSubscribed: false, requiresPrivacyConsent: false};
+  }
+
+  componentDidMount = async () => {
+    /* O N E S I G N A L   S E T U P */
+    OneSignal.setAppId(ONESIGNAL_APP_ID);
+    OneSignal.setLogLevel(6, 0);
+    OneSignal.setRequiresUserPrivacyConsent(false);
+    OneSignal.promptForPushNotificationsWithUserResponse((response) => {
+      //this.OSLog('Prompt response:', response);
+      console.log('Prompt response:', response);
+    });
+
+    /* O N E S I G N A L  H A N D L E R S */
+    OneSignal.setNotificationWillShowInForegroundHandler(
+      (notifReceivedEvent) => {
+        // this.OSLog(
+        //   'OneSignal: notification will show in foreground:',
+        //   notifReceivedEvent,
+        // );
+        console.log(
+          'OneSignal: notification will show in foreground:',
+          notifReceivedEvent,
+        );
+        let notif = notifReceivedEvent.getNotification();
+
+        const button1 = {
+          text: 'Cancel',
+          onPress: () => {
+            notifReceivedEvent.complete();
+          },
+          style: 'cancel',
+        };
+
+        const button2 = {
+          text: 'Complete',
+          onPress: () => {
+            notifReceivedEvent.complete(notif);
+          },
+        };
+
+        Alert.alert('Complete notification?', 'Test', [button1, button2], {
+          cancelable: true,
+        });
+      },
+    );
+    OneSignal.setNotificationOpenedHandler((notification) => {
+      console.log('OneSignal: notification opened:', notification);
+      Alert.alert('OneSignal Push Notif Opened', JSON.stringify(notification));
+    });
+    OneSignal.setInAppMessageClickHandler((event) => {
+      console.log('OneSignal IAM clicked:', event);
+    });
+    OneSignal.addEmailSubscriptionObserver((event) => {
+      console.log('OneSignal: email subscription changed: ', event);
+    });
+    OneSignal.addSubscriptionObserver((event) => {
+      console.log('OneSignal: subscription changed:', event);
+      this.setState({isSubscribed: event.to.isSubscribed});
+    });
+    OneSignal.addPermissionObserver((event) => {
+      console.log('OneSignal: permission changed:', event);
+    });
+
+    const deviceState = await OneSignal.getDeviceState();
+
+    this.setState({
+      isSubscribed: deviceState.isSubscribed,
+    });
+  };
+
+  render = () => <App />;
+}
+
 const styles = StyleSheet.create({
   scrollView: {
     backgroundColor: Colors.lighter,
@@ -160,4 +193,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+export default AppTest;

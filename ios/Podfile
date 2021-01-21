@@ -3,23 +3,6 @@ require_relative '../node_modules/@react-native-community/cli-platform-ios/nativ
 
 platform :ios, '10.0'
 
-use_frameworks!
-
-dynamic_frameworks = ['InsiderMobile', 'InsiderMobileAdvancedNotification']
-pre_install do |installer|
-  installer.pod_targets.each do |pod|
-    if !dynamic_frameworks.include?(pod.name)
-      puts "Overriding the static_framework? mothod for #(pod.name)"
-      def pod.static_framework?
-        true
-      end
-      def pod.build_type;
-        Pod::BuildType.static_library
-      end
-    end
-  end
-end
-
 target 'AwesomeProject' do
   config = use_native_modules!
 
@@ -30,21 +13,12 @@ target 'AwesomeProject' do
   # Note that if you have use_frameworks! enabled, Flipper will not work and
   # you should disable these next few lines.
   use_flipper!
+  pod 'OneSignal', '>= 3.0', '< 4.0'
   post_install do |installer|
     flipper_post_install(installer)
   end
 end
 
-
-target 'InsiderNotificationContent' do
-  inherit! :search_paths
-  # Pods for InsiderNotificationContent
-  pod "InsiderMobileAdvancedNotification"
+target 'NotificationService' do
+  pod 'OneSignal', '>= 3.0', '< 4.0'
 end
-
-target 'InsiderNotificationService' do
-  inherit! :search_paths
-  # Pods for InsiderNotificationService
-  pod "InsiderMobileAdvancedNotification"
-end
-

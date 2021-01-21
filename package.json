@@ -12,7 +12,8 @@
   "dependencies": {
     "react": "16.13.1",
     "react-native": "0.63.4",
-    "react-native-insider": "^4.1.1"
+    "react-native-insider": "^4.1.1",
+    "react-native-onesignal": "^4.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.8.4",
